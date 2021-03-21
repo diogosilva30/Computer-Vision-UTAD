@@ -7,6 +7,7 @@ Created on Mon Mar 15 16:51:37 2021
 import cv2 as cv
 import glob
 import os
+from skimage.measure import compare_ssim as ssim
 
 
 
@@ -20,6 +21,9 @@ directory="Otsu"
 path_dir="C:/Users/pedrk/Desktop/Visão por Computador/TP1/"
 path=os.path.join(path_dir,directory)
 os.mkdir(path)
+
+# Criar um bloco de notas para registar os resultados obtidos
+issm_results=open("ISSM Resultados.txt","w+")
 
 d=0
 
@@ -38,11 +42,15 @@ for f1 in files:
     
     filename="Otsu/img_%d.jpg"%d
     cv.imwrite(filename,img_seg)
+    
+    
+    # similaridade 
+    score=ssim(gray_img2,img_seg)
+    print("Indice de similaridade: ",score)
+    issm_results.write("Indice de similaridade img_" + str(d) + ": "+ str(score) +"\n")
     d+=1
-    
-    # Metodo
-    
-
+        
+issm_results.close()
 cv.waitKey(0) 
     
 
