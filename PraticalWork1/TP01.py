@@ -5,6 +5,7 @@ Created on Mon Mar 15 18:30:47 2021
 @author: pedrk
 """
 import cv2 as cv
+from skimage.measure import compare_ssim
 
 img=cv.imread('Imagens/3096.jpg')
 cv.imshow('aviao',img)
@@ -20,5 +21,10 @@ cv.imshow('gray image2',gray_img2)
 
 ret2,th2 = cv.threshold(gray_img2,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
 cv.imshow('Segmentacao',th2)
+
+(score,diff)=compare_ssim(gray_img2,th2)
+diff = (diff * 255).astype("uint8")
+
+print("SSIM: {}".format(score))
 
 cv.waitKey(0) 
