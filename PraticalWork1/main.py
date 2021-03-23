@@ -7,15 +7,16 @@ Goal of this work:
 """
 
 # Import dependencies
-import glob
-import numpy as np
 import os
-from skimage import filters, io, color
 from abc import ABC, abstractmethod
 
-from mdutils.mdutils import MdUtils
+import glob
+import numpy as np
 
+from skimage import filters, io, color
 from sklearn.cluster import KMeans
+
+from mdutils.mdutils import MdUtils
 
 
 def img_to_markdown(path):
@@ -82,17 +83,19 @@ class OtsuSegmentation(Segmentation):
         img: np.ndarray
             The image to perform segmentation.
 
+        img_name: str
+            The name of the image.
         Returns
         -------
         np.ndarray
-            The segmented image
+            The segmented image.
         """
 
         # Apply Gaussian Blur to smooth the image (5x5 kernel)
         img = filters.gaussian(img)
-        # Apply otsu's global tresholding method
+        # Apply otsu's global thresholding method
         thresholds = filters.threshold_multiotsu(img, classes=self.n_thresholds)
-        # Use the found treshholds to segment image
+        # Use the found thresholds to segment image
         img = np.digitize(img, bins=thresholds)
 
         img = scale_img(img)
@@ -114,13 +117,15 @@ class KMeansSegmentation(Segmentation):
 
         Parameters
         ----------
-        img : np.ndarray
+        img: np.ndarray
             The image to perform segmentation.
 
+        img_name: str
+            The name of the image.
         Returns
         -------
         np.ndarray
-            The segmented image
+            The segmented image.
         """
         # Create a line array, the lazy way
         segmented_img = img.reshape((-1, 1))
