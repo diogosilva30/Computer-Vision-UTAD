@@ -82,6 +82,13 @@ class MeanSquaredErrorMetric(Metric):
         """
         return metrics.mean_squared_error(ground_truth, segmentation)
 
+class PeakSignalNoiseRatio(Metric):
+    def evaluate(self, ground_truth, segmentation):
+        """
+        Evaluates a segmentation using the Peak Signal-to-Noise Ratio
+        """
+        return metrics.peak_signal_noise_ratio(ground_truth, segmentation)
+
 
 class Segmentation(ABC):
     """
@@ -281,6 +288,7 @@ def main():
     segmentation_metrics = [
         MeanStructuralSimilitaryIndexMetric(),
         MeanSquaredErrorMetric(),
+        PeakSignalNoiseRatio(),
     ]
 
     # Define the list of segmentation methods to use
