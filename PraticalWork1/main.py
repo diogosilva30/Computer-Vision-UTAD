@@ -129,7 +129,7 @@ class Segmentation(ABC):
         return dest
 
     @abstractmethod
-    def segment(self, img: np.ndarray, img_location: str) -> str:
+    def segment(self, img: np.ndarray, img_location: str) -> np.ndarray:
         """
         Performs segmentation on a image
 
@@ -142,8 +142,8 @@ class Segmentation(ABC):
             The name of the image.
         Returns
         -------
-        str
-            The path where the segmented image was saved.
+        np.ndarray
+            The segmented image.
         """
 
     def evaluate(self, original_img: np.ndarray, segmented_img: np.ndarray) -> dict:
@@ -198,8 +198,8 @@ class OtsuSegmentation(Segmentation):
 
         Returns
         -------
-        str
-            The path where the segmented image was saved.
+        np.ndarray
+            The segmented image.
         """
 
         # Apply Gaussian Blur to smooth the image (5x5 kernel)
@@ -239,8 +239,8 @@ class KMeansSegmentation(Segmentation):
 
         Returns
         -------
-        str
-            The path where the segmented image was saved.
+        np.ndarray
+            The segmented image.
         """
         # Create a line array, the lazy way
         segmented_img = img.reshape((-1, 1))
