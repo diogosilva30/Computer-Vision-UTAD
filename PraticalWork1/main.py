@@ -5,15 +5,15 @@ Goal of this work:
 - Implement 2/3 Evaluation Metrics
 - Perform a critical analysis of the results
 """
-
 # Import dependencies
 import os
 from abc import ABC, abstractmethod
+from timeit import default_timer as timer
 
 import glob
 import numpy as np
 
-from skimage import filters, io, color
+from skimage import filters, io, color, metrics
 from sklearn.cluster import KMeans
 
 from mdutils.mdutils import MdUtils
@@ -48,12 +48,55 @@ def scale_img(img: np.ndarray) -> np.ndarray:
     return ((img - img.min()) * (1 / (img.max() - img.min()) * 255)).astype("uint8")
 
 
+class Metric(ABC):
+    """
+    Abstract class for Segmentation Metrics
+    """
+
+    def evaluate(self, ground_truth, segmentation):
+        """
+        Evalutes the segmentation, when compared to the ground truth.
+        """
+
+    def __str__(self):
+        """
+        Returns the name of the class without "Metric".
+        """
+        return self.__class__.__name__.split("Metric")[0]
+
+
+class MeanStructuralSimilitaryIndexMetric(Metric):
+    def evaluate(self, ground_truth, segmentation):
+        """
+        Evaluates a segmentation using the Mean Structural
+        Similitary Index
+        """
+        return metrics.structural_similarity(ground_truth, segmentation)
+
+
+class MeanSquaredErrorMetric(Metric):
+    def evaluate(self, ground_truth, segmentation):
+        """
+        Evaluates a segmentation using the Mean Squared Error
+        """
+        return metrics.mean_squared_error(ground_truth, segmentation)
+
+
 class Segmentation(ABC):
     """
     Abstract class for Segmentation Algorithms
     """
 
-    def __init__(self) -> None:
+    def __init__(self, metrics: list[Metric] = None) -> None:
+        """
+        Base constructor for a Segmentation algorithm
+
+        Parameters
+        ----------
+        metrics: list of Metric (optional)
+            A list of Metric objects, to evaluate the segmentations.
+        """
+        self.metrics = metrics
         # Make sure Results dir exists
         if not os.path.exists("Results"):
             os.mkdir("Results")
@@ -102,9 +145,33 @@ class Segmentation(ABC):
             The path where the segmented image was saved.
         """
 
+    def evaluate(self, original_img: np.ndarray, segmented_img: np.ndarray) -> dict:
+        """
+        Computes metric values for a segmentation.
+
+        Parameters
+        ----------
+        original_img: np.ndarray
+            The ground truth image.
+        segmented_img: np.ndarray
+            The segmented image.
+
+        Returns
+        -------
+        dict
+            Returns a dictionary where the keys are the metrics names,
+            and the values the metrics values.
+        """
+        if not self.metrics:
+            raise ValueError("No metrics were passed in the constructor.")
+        return {
+            str(metric): metric.evaluate(original_img, segmented_img)
+            for metric in self.metrics
+        }
+
     def __str__(self) -> str:
         """
-        Returns the name of the method without "Segmentation".
+        Returns the name of the class without "Segmentation".
         """
         return self.__class__.__name__.split("Segmentation")[0]
 
@@ -115,11 +182,11 @@ class OtsuSegmentation(Segmentation):
     for image segmentation.
     """
 
-    def __init__(self, n_thresholds: int = 3) -> None:
+    def __init__(self, n_thresholds: int = 3, **kwargs) -> None:
         self.n_thresholds = n_thresholds
-        super().__init__()
+        super().__init__(**kwargs)
 
-    def segment(self, img, img_name):
+    def segment(self, img):
         """
         Applies Otsu's Multi-Tresholding to a Image
 
@@ -128,8 +195,6 @@ class OtsuSegmentation(Segmentation):
         img: np.ndarray
             The image to perform segmentation.
 
-        img_name: str
-            The name of the image.
         Returns
         -------
         str
@@ -146,7 +211,7 @@ class OtsuSegmentation(Segmentation):
         # Scale the image
         img = scale_img(img)
 
-        return self.save(img, img_name)
+        return img
 
     def __str__(self) -> str:
         return f"Otsu's - {self.n_thresholds} thresholds"
@@ -158,11 +223,11 @@ class KMeansSegmentation(Segmentation):
     for image segmentation.
     """
 
-    def __init__(self, n_clusters=3) -> None:
+    def __init__(self, n_clusters=3, **kwargs) -> None:
         self.n_clusters = n_clusters
-        super().__init__()
+        super().__init__(**kwargs)
 
-    def segment(self, img, img_name):
+    def segment(self, img):
         """
         Applies K-means Segmentation to a Image
 
@@ -171,8 +236,6 @@ class KMeansSegmentation(Segmentation):
         img: np.ndarray
             The image to perform segmentation.
 
-        img_name: str
-            The name of the image.
         Returns
         -------
         str
@@ -197,7 +260,7 @@ class KMeansSegmentation(Segmentation):
 
         # Scale image
         img_segmented = scale_img(img_segmented)
-        return self.save(img_segmented, img_name)
+        return img_segmented
 
     def __str__(self) -> str:
         """
@@ -209,26 +272,46 @@ class KMeansSegmentation(Segmentation):
 def main():
     # Find all the images
     images = glob.glob("Images/**")
-
+    # print(images)
+    # raise ValueError
     # Create Markdown file
     mdFile = MdUtils(file_name="Results", title="Pratical Work - Segmentation")
+
+    # Define the list of segmentation metrics to use
+    segmentation_metrics = [
+        MeanStructuralSimilitaryIndexMetric(),
+        MeanSquaredErrorMetric(),
+    ]
 
     # Define the list of segmentation methods to use
     segmentation_methods = [
         # KMeansSegmentation(n_clusters=2),
-        KMeansSegmentation(n_clusters=5),
-        OtsuSegmentation(n_thresholds=5),
+        KMeansSegmentation(
+            n_clusters=3,
+            metrics=segmentation_metrics,
+        ),
+        OtsuSegmentation(
+            n_thresholds=3,
+            metrics=segmentation_metrics,
+        ),
+        KMeansSegmentation(
+            n_clusters=5,
+            metrics=segmentation_metrics,
+        ),
+        OtsuSegmentation(
+            n_thresholds=5,
+            metrics=segmentation_metrics,
+        ),
     ]
+
     # Let's create a markdown table for the segmentation results
     table_contents = ["Original Image"]
     # Add Method Headers
     table_contents.extend([str(method) for method in segmentation_methods])
 
     # Iterate over each image
-    img_count = 1
-    for img_location in images:
-        # Display current image being processed
-        print(f"Image {img_count}/{len(images)}")
+    for i, img_location in enumerate(images):
+        print(f"Segmenting image {i}/{len(images)}")
         # Extract img name
         img_name = img_location.split("\\")[-1]
         # Read img as grayscale
@@ -242,23 +325,42 @@ def main():
         gray_location = f"Grayscale/{img_name}"
         io.imsave(gray_location, gray)
 
-        # Add the segmentation results to the Markdown Table
-        table_contents.extend(
-            [
-                img_to_markdown(gray_location),
-            ]
-            + [
-                img_to_markdown(method.segment(gray, img_name))
-                for method in segmentation_methods
-            ]
-        )
+        # Add first column (original image)
+        table_contents.extend([img_to_markdown(gray_location)])
+        # Iterate over each segmentation method
+        for method in segmentation_methods:
+            # Segment the image
+            # Record time it takes to segment image
+            start = timer()
+            segmented_img = method.segment(gray)
+            end = timer()
+            # Save the image
+            segmented_img_location = method.save(segmented_img, img_name)
+            # Evaluate the segmentation
+            segmentation_results = method.evaluate(gray, segmented_img)
+            # Convert the `segmentation_results` dictionary
+            # to a more human redable version
+            segmentation_results = (
+                f"Time taken to segment: {(end-start):.3f} seconds <br/>"
+                + "<br/>".join(
+                    [
+                        f"**{key}**: {value:.2f}"
+                        for key, value in segmentation_results.items()
+                    ]
+                )
+            )
 
-        img_count += 1
+            # Add the segmentation results to the Markdown Table
+            table_contents.extend(
+                [
+                    f"{(img_to_markdown(segmented_img_location))}{str(segmentation_results)}"
+                ]
+            )
 
     # Create the table
     mdFile.new_table(
         columns=len(segmentation_methods) + 1,
-        rows=img_count,
+        rows=len(images) + 1,
         text=table_contents,
         text_align="center",
     )
