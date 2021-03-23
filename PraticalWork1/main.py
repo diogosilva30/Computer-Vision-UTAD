@@ -52,7 +52,8 @@ class Metric(ABC):
     """
     Abstract class for Segmentation Metrics
     """
-
+    
+    @abstractmethod
     def evaluate(self, ground_truth, segmentation):
         """
         Evalutes the segmentation, when compared to the ground truth.
