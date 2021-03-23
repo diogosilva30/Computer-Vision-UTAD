@@ -273,8 +273,7 @@ class KMeansSegmentation(Segmentation):
 def main():
     # Find all the images
     images = glob.glob("Images/**")
-    # print(images)
-    # raise ValueError
+    
     # Create Markdown file
     mdFile = MdUtils(file_name="Results", title="Pratical Work - Segmentation")
 
