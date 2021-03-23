@@ -19,26 +19,60 @@ from sklearn.cluster import KMeans
 from mdutils.mdutils import MdUtils
 
 
-def img_to_markdown(path):
+def img_to_markdown(path: str) -> str:
+    """
+    Creates a Markdown Image.
+
+    Parameters
+    ----------
+    path: str
+        The image path.
+    """
     return MdUtils.new_inline_image(text=path, path=path)
 
 
-def scale_img(img):
+def scale_img(img: np.ndarray) -> np.ndarray:
     """
     Scales image to 0-255, and type 'uint8'
+
+    Parameters
+    ----------
+    img: np.ndarray
+        The image to be scaled
+
+    Returns
+    -------
+    np.ndarray
+        The scaled image
     """
     return ((img - img.min()) * (1 / (img.max() - img.min()) * 255)).astype("uint8")
 
 
 class Segmentation(ABC):
+    """
+    Abstract class for Segmentation Algorithms
+    """
+
     def __init__(self) -> None:
         # Make sure Results dir exists
         if not os.path.exists("Results"):
             os.mkdir("Results")
 
-    def save(self, img, img_name):
+    def save(self, img: str, img_name: str) -> str:
         """
-        Saves an img
+        Saves an image
+
+        Parameters
+        ----------
+        img: np.ndarray
+            The image to be saved.
+        img_name: str
+            The name of the image.
+
+        Returns
+        -------
+        str
+            The path where the image was saved.
         """
         method_name = str(self).replace(" ", "").replace("-", "_")
         # Save the image to original folder,
@@ -50,16 +84,22 @@ class Segmentation(ABC):
         # Return where the img was saved
         return dest
 
-    def _load_img(self, img_location):
-        """
-        Loads a image
-        """
-        return io.imread(img_location)
-
     @abstractmethod
-    def segment(self, img_location):
+    def segment(self, img: np.ndarray, img_location: str) -> str:
         """
-        Perform segmentation
+        Performs segmentation on a image
+
+        Parameters
+        ----------
+        img: np.ndarray
+            The image to perform segmentation.
+
+        img_name: str
+            The name of the image.
+        Returns
+        -------
+        str
+            The path where the segmented image was saved.
         """
 
     def __str__(self) -> str:
@@ -70,6 +110,11 @@ class Segmentation(ABC):
 
 
 class OtsuSegmentation(Segmentation):
+    """
+    Otsu's MultiTresholding Algorithm
+    for image segmentation.
+    """
+
     def __init__(self, n_thresholds: int = 3) -> None:
         self.n_thresholds = n_thresholds
         super().__init__()
@@ -87,8 +132,8 @@ class OtsuSegmentation(Segmentation):
             The name of the image.
         Returns
         -------
-        np.ndarray
-            The segmented image.
+        str
+            The path where the segmented image was saved.
         """
 
         # Apply Gaussian Blur to smooth the image (5x5 kernel)
@@ -98,6 +143,7 @@ class OtsuSegmentation(Segmentation):
         # Use the found thresholds to segment image
         img = np.digitize(img, bins=thresholds)
 
+        # Scale the image
         img = scale_img(img)
 
         return self.save(img, img_name)
@@ -107,6 +153,11 @@ class OtsuSegmentation(Segmentation):
 
 
 class KMeansSegmentation(Segmentation):
+    """
+    Implementation of K-Means++ Algorithm
+    for image segmentation.
+    """
+
     def __init__(self, n_clusters=3) -> None:
         self.n_clusters = n_clusters
         super().__init__()
@@ -124,8 +175,8 @@ class KMeansSegmentation(Segmentation):
             The name of the image.
         Returns
         -------
-        np.ndarray
-            The segmented image.
+        str
+            The path where the segmented image was saved.
         """
         # Create a line array, the lazy way
         segmented_img = img.reshape((-1, 1))
@@ -141,11 +192,17 @@ class KMeansSegmentation(Segmentation):
         # create an array from labels and values
         img_segmented = np.choose(labels, values)
 
+        # Reshape image back to original
         img_segmented.shape = img.shape
+
+        # Scale image
         img_segmented = scale_img(img_segmented)
         return self.save(img_segmented, img_name)
 
     def __str__(self) -> str:
+        """
+        String representation of this class.
+        """
         return f"K-means++ - {self.n_clusters} clusters"
 
 
