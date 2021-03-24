@@ -52,7 +52,7 @@ class Metric(ABC):
     """
     Abstract class for Segmentation Metrics
     """
-    
+
     @abstractmethod
     def evaluate(self, ground_truth, segmentation):
         """
@@ -81,6 +81,7 @@ class MeanSquaredErrorMetric(Metric):
         Evaluates a segmentation using the Mean Squared Error
         """
         return metrics.mean_squared_error(ground_truth, segmentation)
+
 
 class PeakSignalNoiseRatioMetric(Metric):
     def evaluate(self, ground_truth, segmentation):
@@ -136,7 +137,7 @@ class Segmentation(ABC):
         return dest
 
     @abstractmethod
-    def segment(self, img: np.ndarray, img_location: str) -> np.ndarray:
+    def segment(self, img: np.ndarray, img_location: str) -> str:
         """
         Performs segmentation on a image
 
@@ -149,8 +150,8 @@ class Segmentation(ABC):
             The name of the image.
         Returns
         -------
-        np.ndarray
-            The segmented image.
+        str
+            The path where the segmented image was saved.
         """
 
     def evaluate(self, original_img: np.ndarray, segmented_img: np.ndarray) -> dict:
@@ -205,8 +206,8 @@ class OtsuSegmentation(Segmentation):
 
         Returns
         -------
-        np.ndarray
-            The segmented image.
+        str
+            The path where the segmented image was saved.
         """
 
         # Apply Gaussian Blur to smooth the image (5x5 kernel)
@@ -246,8 +247,8 @@ class KMeansSegmentation(Segmentation):
 
         Returns
         -------
-        np.ndarray
-            The segmented image.
+        str
+            The path where the segmented image was saved.
         """
         # Create a line array, the lazy way
         segmented_img = img.reshape((-1, 1))
@@ -280,7 +281,8 @@ class KMeansSegmentation(Segmentation):
 def main():
     # Find all the images
     images = glob.glob("Images/**")
-    
+    # print(images)
+    # raise ValueError
     # Create Markdown file
     mdFile = MdUtils(file_name="Results", title="Pratical Work - Segmentation")
 
@@ -319,7 +321,7 @@ def main():
 
     # Iterate over each image
     for i, img_location in enumerate(images):
-        print(f"Segmenting image {i}/{len(images)}")
+        print(f"Segmenting image {i+1}/{len(images)}")
         # Extract img name
         img_name = img_location.split("\\")[-1]
         # Read img as grayscale
