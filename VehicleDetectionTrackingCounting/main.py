@@ -37,22 +37,27 @@ class CarTracker:
 
         # Update the collection of tracked objects
         self.tracked_objects[object_id] = object
+
+        # Return the object
         return object
 
     def process_video(self, video_file):
         # Instantiate a OpenCV video capture
         cap = cv2.VideoCapture(video_file)
 
-        # instantiate our centroid tracker, then initialize a list to store
-        # each of our dlib correlation trackers, followed by a dictionary to
-        # map each unique object ID to a TrackableObject
+        # Instantiate the centroid tracker
         tracker = CentroidTracker(maxDisappeared=5, maxDistance=90)
 
+        # Record start time for fps measurement
         fps_start_time = datetime.datetime.now()
 
-        total_cars = 0
+        # Variable for holding the number of processed frames (for fps measurement)
         total_frames = 0
 
+        # Create variable for holding the number of
+        # counted cars
+        total_cars = 0
+        
         # Start the frame reading loop
         while True:
 
@@ -147,27 +152,31 @@ class CarTracker:
                     )
                 # Check if object has been counted already, and is bellow horizontal line
                 if not object.counted and cy > line_height:
-                    # Check if bellow horizontal line
+                    # If so, add 1 to the car count
                     total_cars += 1
+                    # Mark this object as counted already (so it does not get re-counted)
                     object.counted = True
 
+            # Show the processed frame
             cv2.imshow("Tracker", frame)
             key = cv2.waitKey(1)
+            # If user presses 'Q' quit the loop
             if key == ord("q"):
                 break
 
 
-# args = ap.parse_args()
 
+if __name__=="__main__":
+    # Create the car detector
+    detector = DeepLearningDetector(
+        proto_path="models/MobileNetSSD/MobileNetSSD_deploy.prototxt",
+        model_path="models/MobileNetSSD/MobileNetSSD_deploy.caffemodel",
+        detection_treshold=0.55,
+        detection_classes=["car"],
+    )
 
-detector = DeepLearningDetector(
-    proto_path="models/MobileNetSSD/MobileNetSSD_deploy.prototxt",
-    model_path="models/MobileNetSSD/MobileNetSSD_deploy.caffemodel",
-    detection_treshold=0.55,
-    detection_classes=["car"],
-)
+    # Create the tracker and pass our detector
+    ct = CarTracker(detector=detector)
 
-
-ct = CarTracker(detector=detector)
-
-ct.process_video("video.mp4")
+    # Process the video
+    ct.process_video("video.mp4")
