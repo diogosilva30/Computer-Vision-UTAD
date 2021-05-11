@@ -1,12 +1,13 @@
 import cv2
+
 from trackers import TrackableObject, CentroidTracker
-import numpy as np
 import datetime
-import imutils
+
+# import imutils
 
 import time
-from detectors import BaseDetector, DeepLearningDetector
-from utils import non_max_suppression
+from detectors import BaseDetector, DeepLearningDetector, HaarCascadeDectector
+from utils import non_max_suppression, image_resize
 
 
 class CarTracker:
@@ -57,7 +58,7 @@ class CarTracker:
         # Create variable for holding the number of
         # counted cars
         total_cars = 0
-        
+
         # Start the frame reading loop
         while True:
 
@@ -68,7 +69,7 @@ class CarTracker:
                 break
 
             # Resize frame for faster processing
-            frame = imutils.resize(frame, width=720)
+            frame = image_resize(frame, width=720)
 
             # Increment total frames variable
             total_frames = total_frames + 1
@@ -164,15 +165,19 @@ class CarTracker:
             if key == ord("q"):
                 break
 
+        print(f"Counted {total_cars} cars!")
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     # Create the car detector
     detector = DeepLearningDetector(
         proto_path="models/MobileNetSSD/MobileNetSSD_deploy.prototxt",
         model_path="models/MobileNetSSD/MobileNetSSD_deploy.caffemodel",
         detection_treshold=0.55,
         detection_classes=["car"],
+    )
+    detector = HaarCascadeDectector(
+        xml_path="models/HaarCascade/car.xml",
     )
 
     # Create the tracker and pass our detector

@@ -13,7 +13,23 @@ class BaseDetector(ABC):
 
 
 class HaarCascadeDectector(BaseDetector):
-    pass
+    def __init__(self, xml_path: str):
+        self.model = cv2.CascadeClassifier(xml_path)
+
+    def detect(self, frame: np.ndarray) -> list:
+        # convert frame to grayscale
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Detect cars with cascade classifier
+        detections = self.model.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3)
+
+        rects = []
+
+        for (x, y, w, h) in detections:
+            rects.append([x, y, x + w, y + h])
+            # cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 10)
+
+        return np.array(rects)
 
 
 class DeepLearningDetector(BaseDetector):
@@ -67,7 +83,7 @@ class DeepLearningDetector(BaseDetector):
         self.detection_classes = detection_classes
 
     def detect(self, frame: np.ndarray) -> np.ndarray:
-        
+
         """
         Perform detection using a Deep Learning Neural Network.
 
@@ -75,7 +91,7 @@ class DeepLearningDetector(BaseDetector):
         ----------
         frame: np.ndarray
             A frame (image) to perform object detection.
-        
+
         Returns
         -------
         list
@@ -105,7 +121,7 @@ class DeepLearningDetector(BaseDetector):
                 # If not, ignore it
                 if not self.class_names[idx] in self.detection_classes:
                     continue
-                    
+
                 # Get the bouxing box of the object
                 box = detections[0, 0, i, 3:7] * np.array([W, H, W, H])
 
@@ -117,4 +133,3 @@ class DeepLearningDetector(BaseDetector):
         bounding_boxes = bounding_boxes.astype(int)
 
         return bounding_boxes
-        
