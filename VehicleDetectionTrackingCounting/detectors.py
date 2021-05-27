@@ -46,10 +46,6 @@ class DeepLearningDetector(BaseDetector):
         self.net = cv2.dnn.readNetFromCaffe(prototxt=proto_path, caffeModel=model_path)
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-        # self.net.setInputSize(320, 320)
-        # self.net.setInputScale(1.0 / 127.5)
-        #  self.net.setInputMean((127.5, 127.5, 127.5))
-        # self.net.setInputSwapRB(True)
 
         self.class_names = [
             "background",
@@ -79,8 +75,7 @@ class DeepLearningDetector(BaseDetector):
         self.detection_treshold = detection_treshold
         # Save the classes that should be detected
         # Use a set for optimum look-up performance [ O(1) instead of O(n) ]
-        # Normalize each element to upper string
-        self.detection_classes = detection_classes
+        self.detection_classes = set(detection_classes)
 
     def detect(self, frame: np.ndarray) -> np.ndarray:
 

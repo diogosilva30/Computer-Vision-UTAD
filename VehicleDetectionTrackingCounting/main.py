@@ -138,7 +138,7 @@ class CarTracker:
                 else:
                     fps = total_frames / time_diff.seconds
 
-                info = [("Counter", total_cars), ("FPS", int(fps))]
+                info = [("Counter", total_cars)]
                 # loop over the info tuples and draw them on our frame
                 for (i, (k, v)) in enumerate(info):
                     text = "{}: {}".format(k, v)
@@ -164,6 +164,10 @@ class CarTracker:
             # If user presses 'Q' quit the loop
             if key == ord("q"):
                 break
+
+            # If user presses 'p' pause the video
+            if key == ord("p"):
+                cv2.waitKey(-1)  # wait until any key is pressed
 
         print(f"Counted {total_cars} cars!")
 
