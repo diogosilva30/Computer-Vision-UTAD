@@ -173,13 +173,15 @@ class CarTracker:
 
 
 if __name__ == "__main__":
-    # Create the car detector
+    # Create the car detector (Deep Learning)
     detector = DeepLearningDetector(
         proto_path="models/MobileNetSSD/MobileNetSSD_deploy.prototxt",
         model_path="models/MobileNetSSD/MobileNetSSD_deploy.caffemodel",
         detection_treshold=0.55,
         detection_classes=["car"],
     )
+    # Or create a Haar Feature Cascade Classifier (comment the bellow
+    # to use the Deep Learning Detector)
     detector = HaarCascadeDectector(
         xml_path="models/HaarCascade/car.xml",
     )
